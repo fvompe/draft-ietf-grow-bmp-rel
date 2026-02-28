@@ -20,3 +20,4 @@ $ xml2rfc draft-ietf-grow-bmp-rel.xml --text
 Parsing file draft-ietf-grow-bmp-rel.xml
 Created file draft-ietf-grow-bmp-rel.txt
 ```
+test
