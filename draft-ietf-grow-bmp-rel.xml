@@ -2,13 +2,16 @@
 <!DOCTYPE rfc SYSTEM "rfc2629.dtd" [
         <!ENTITY RFC2119 SYSTEM "http://xml.resource.org/public/rfc/bibxml/reference.RFC.2119.xml">
         <!ENTITY RFC8174 SYSTEM "http://xml.resource.org/public/rfc/bibxml/reference.RFC.8174.xml">
+        <!ENTITY RFC8210 SYSTEM "http://xml.resource.org/public/rfc/bibxml/reference.RFC.8210.xml">
         <!ENTITY RFC9067 SYSTEM "http://xml.resource.org/public/rfc/bibxml/reference.RFC.9067.xml">
         <!ENTITY RFC7606 SYSTEM "http://xml.resource.org/public/rfc/bibxml/reference.RFC.7606.xml">
         <!ENTITY RFC8126 SYSTEM "http://xml.resource.org/public/rfc/bibxml/reference.RFC.8126.xml">
+        <!ENTITY RFC9582 SYSTEM "http://xml.resource.org/public/rfc/bibxml/reference.RFC.9582.xml">
         <!ENTITY I-D.ietf-grow-bmp-tlv SYSTEM "https://bib.ietf.org/public/rfc/bibxml3/reference.I-D.ietf-grow-bmp-tlv.xml">
         <!ENTITY I-D.ietf-grow-bmp-path-marking-tlv SYSTEM "https://bib.ietf.org/public/rfc/bibxml3/reference.I-D.ietf-grow-bmp-path-marking-tlv.xml">
         <!ENTITY I-D.ietf-grow-bmp-bgp-rib-stats SYSTEM "https://bib.ietf.org/public/rfc/bibxml3/reference.I-D.ietf-grow-bmp-bgp-rib-stats.xml">
         <!ENTITY I-D.ietf-idr-bgp-model SYSTEM "https://bib.ietf.org/public/rfc/bibxml3/reference.I-D.ietf-idr-bgp-model.xml">
+        <!ENTITY I-D.ietf-sidrops-aspa-verification SYSTEM "https://bib.ietf.org/public/rfc/bibxml3/reference.I-D.ietf-sidrops-aspa-verification.xml">
 
 	<!ENTITY IANA_REL_CODE_ET_ROUTING "1">
 	<!ENTITY IANA_REL_CODE_ET_HEALTH "2">
@@ -21,13 +24,14 @@
 	<!ENTITY IANA_REL_CODE_EVENT_REASON "5">
 	<!ENTITY IANA_REL_CODE_LOG_ACTION "6">
 	<!ENTITY IANA_REL_CODE_POLICY_DISCARD "7">
-	<!ENTITY IANA_REL_CODE_VALIDATION_FAIL "8">
+	<!ENTITY IANA_REL_CODE_VALIDATION "8">
 	<!ENTITY IANA_REL_CODE_MALFORMED_PACKET "9">
 
 	<!ENTITY IANA_REL_CODE_ER_LOG_ACTION "0x0001">
 	<!ENTITY IANA_REL_CODE_ER_POLICY_DISCARD "0x0002">
-	<!ENTITY IANA_REL_CODE_ER_VALIDATION_FAIL "0x0004">
+	<!ENTITY IANA_REL_CODE_ER_VALIDATION_STATE_CHANGE "0x0004">
 	<!ENTITY IANA_REL_CODE_ER_MALFORMED_PACKET "0x0008">
+	<!ENTITY IANA_REL_CODE_RPKI_CACHE_CONTEXT "TBD">
 
 	<!ENTITY IANA_REL_CODE_LA_CONFIG "1">
 	<!ENTITY IANA_REL_CODE_LA_UNSTABLE "2">
@@ -39,6 +43,7 @@
 
 	<!ENTITY IANA_REL_CODE_VF_RPKI_INVALID "1">
 	<!ENTITY IANA_REL_CODE_VF_RPKI_COVERED_INVALID "2">
+	<!ENTITY IANA_REL_CODE_VF_RPKI_VALID "TBD">
 
 	<!ENTITY IANA_REL_CODE_VF_RPKI_R_ASOM "0x01">
 	<!ENTITY IANA_REL_CODE_VF_RPKI_R_MLV "0x02">
@@ -149,6 +154,14 @@
 		<xref target="RFC8174">RFC 8174</xref> when, and only when, they
 		appear in all capitals, as shown here.
             </t>
+            <t>
+		The term "RPKI cache" in this document refers to the router's local
+		store of RPKI data received via the RTR protocol
+		<xref target="RFC8210"/>, including Route Origin Authorizations
+		(ROAs) <xref target="RFC9582"/>, Autonomous System Provider Authorization (ASPA)
+		objects <xref target="I-D.ietf-sidrops-aspa-verification"/>, and
+		other RPKI objects.
+            </t>
         </section>
 
 	<section title="Route Event Logging (REL) message" anchor="RELStruct">
@@ -200,7 +213,7 @@
             <t>
                 <list style="symbols">
                         <t>
-                        Code = &IANA_REL_CODE_ET_ROUTING;: The event is related to Routing.
+                        Code = &IANA_REL_CODE_ET_ROUTING;: The event is related to Routing and Validation.
                         </t>
                         <t>
                         Code = &IANA_REL_CODE_ET_HEALTH;: The event is related to the health
@@ -209,7 +222,7 @@
                 </list>
                         In this registry reason code 0 (zero) is reserved.
             </t>
-	    <section title="Routing Event Type">
+	    <section title="Routing and Validation Event Type">
             	<t>
 			The Per-Peer Header will follow. One or more Event Subjects
 			are packed as part of the BGP Update PDU. The BGP Update PDU
@@ -217,6 +230,12 @@
 			as part of the BGP Message TLV with code point &IANA_REL_CODE_BGP_PDU;
 			and index set to zero. Each Event Subject is represented by an
 			NLRI carried in the PDU. 
+            	</t>
+            	<t>
+			RPKI Cache updates may trigger Routing and Validation events.
+			In such cases the BGP Update PDU is artificial and carries
+			Validation State Change TLV and optional RPKI Cache Context TLV
+			providing further context.
             	</t>
             	<t>
 			The BGP Message TLV may be preceded and/or followed by indexed
@@ -345,8 +364,8 @@
 			<td align="left">Policy Discard</td>
 		</tr>
 		<tr>
-			<td align="center">&IANA_REL_CODE_ER_VALIDATION_FAIL;</td>
-			<td align="left">Validation Fail</td>
+			<td align="center">&IANA_REL_CODE_ER_VALIDATION_STATE_CHANGE;</td>
+			<td align="left">Validation State Change</td>
 		</tr>
 		<tr>
 			<td align="center">&IANA_REL_CODE_ER_MALFORMED_PACKET;</td>
@@ -417,11 +436,11 @@
 		     </list>
 		  </t>
 	    </section>
-	    <section title="Validation Fail TLV" anchor="ValidationFailTLV">
+	    <section title="Validation State Change TLV" anchor="ValidationStateChangeTLV">
 		<t>
-		    &IANA_REL_CODE_VALIDATION_FAIL; = Validation Fail TLV. The value
-		    consists in 1 byte Validation Fail Type, a code giving more
-		    information about the specific validation failure, and can be
+		    &IANA_REL_CODE_VALIDATION; = Validation State Change TLV. The value
+		    consists in 1 byte Validation State Change Type, a code giving more
+		    information about the specific validation state change, and can be
 		    followed by optional data. Following are the defined Validation
 		    Fail Type code points:
 		</t>
@@ -438,12 +457,18 @@
 			with covering Valid prefix. The NLRI is being marked as RPKI
 			'invalid' but is covered by a Valid prefix.
 			</t>
+			<t>
+			Code = &IANA_REL_CODE_VF_RPKI_VALID;: RPKI Valid. The prefix
+			validation state has transitioned to RPKI 'valid', for example
+			following an RPKI cache update that introduced or updated a matching
+			Route Origin Authorization (ROA).
+			</t>
 		</list>
 		</t>
 		<t>
-			RPKI Validation Fail Types, namely &IANA_REL_CODE_VF_RPKI_INVALID;
-			and &IANA_REL_CODE_VF_RPKI_COVERED_INVALID;, can be followed by an
-			optional 1 byte Reason code as defined below:
+			RPKI Validation State Change Types, namely &IANA_REL_CODE_VF_RPKI_VALID;,
+			&IANA_REL_CODE_VF_RPKI_INVALID; and &IANA_REL_CODE_VF_RPKI_COVERED_INVALID;,
+			can be followed by an optional 1 byte Reason code as defined below:
 		</t>
 		<t>
 		<list style="symbols">
@@ -475,6 +500,32 @@
 		</list>
 		</t>
 	    </section>
+		<section title="RPKI Cache Context TLV" anchor="RPKICacheContextTLV">
+		<t>
+			&IANA_REL_CODE_RPKI_CACHE_CONTEXT; = RPKI Cache Context TLV. This
+			optional TLV MAY follow a Validation State Change TLV to correlate
+			the reported validation state change with the RPKI cache update that
+			triggered it. The value field is organized as follows:
+			<list style="symbols">
+			<t>
+				RTR Session ID (2 octets): The RTR protocol session identifier
+				as defined in <xref target="RFC8210">RFC8210</xref>,
+				identifying the RPKI cache session.
+			</t>
+			<t>
+				Serial Number (4 octets): The RTR serial number of the cache
+				update that triggered the validation state change
+				as defined in <xref target="RFC8210">RFC8210</xref>.
+			</t>
+			<t>
+				Cache Identifier (variable, optional): A UTF-8 string
+				identifying the RPKI cache, for example a hostname or IP
+				address. Its presence is indicated by a non-zero remaining
+				TLV length after the Serial Number field.
+			</t>
+			</list>
+		</t>
+		</section>
 	</section>
         <section title="Group TLV" anchor="GroupTLV">
             <t>
@@ -500,7 +551,7 @@
 	    <t>
 		REL can be used to send real-time notifications for specific routing
 		events enabling rapid alerting of issues like policy discards,
-		validation failures, or malformed packets to operators. For example,
+		validation state changes, or malformed packets to operators. For example,
 		an operator is notified immediately when a route is discarded due to
 		policy, assisting quick diagnosis and policy refinement.
 	    </t>
@@ -508,7 +559,7 @@
 		By logging every routing event and the corresponding reason code, REL
 		enables thorough audits of route changes and network behavior over
 		time. For example, when a route fails validation, a log entry with
-		the "Validation Fail" reason is stored for compliance checks and
+		the "Validation State Change" reason is stored for compliance checks and
 		future forensics.
 	    </t>
 	    <t>
@@ -529,10 +580,14 @@
 		the recommendation is to use Route Monitoring messages with <xref
 		target="I-D.ietf-grow-bmp-path-marking-tlv"> BMP Path Marking</xref>.
 		As an example consider RPKI validation status: when the objective is
-		to report on any validations status (ie. valid, invalid and unknown),
+		to report on any validations status (ie. valid, invalid),
 		BMP Path Marking should be used; when the objective is instead to
-		report only invalids then REL with Validation Fail Event Reason should
+		report only invalids then REL with Validation State Change Event Reason should
 		be used.
+	    </t>
+	    <t>
+		RPKI Cache resets or large serial advances can cause large volumes
+		of validation status changes. Implementations SHOULD apply rate limiting.
 	    </t>
 	    <t>
 		There exists a definite overlap between REL when used to report Malformed
@@ -610,8 +665,8 @@
 				to routing policy. The value is defined in <xref target="PolicyDiscardTLV"/>.
 			</t>
 			<t>
-				Type = &IANA_REL_CODE_VALIDATION_FAIL;: Marks validation-related failure
-				(e.g., RPKI invalidation). The value is defined in <xref target="ValidationFailTLV"/>.
+				Type = &IANA_REL_CODE_VALIDATION;: Marks validation-related state changes
+				(e.g., RPKI invalidation). The value is defined in <xref target="ValidationStateChangeTLV"/>.
 			</t>
 			<t>
 				Type = &IANA_REL_CODE_MALFORMED_PACKET;: Reports a malformed BGP
@@ -640,7 +695,7 @@
 					Type = &IANA_REL_CODE_ER_POLICY_DISCARD;: Policy Discard reason.
 				</t>
 				<t>
-					Type = &IANA_REL_CODE_ER_VALIDATION_FAIL;: Validation Fail reason.
+					Type = &IANA_REL_CODE_ER_VALIDATION_STATE_CHANGE;: Validation State Change reason.
 				</t>
 				<t>
 					Type = &IANA_REL_CODE_ER_MALFORMED_PACKET;: Malformed Packet reason.
@@ -707,10 +762,10 @@
 		</section>
 
 		<section>
-			<name>Validation Fail TLV Registry</name>
+			<name>Validation State Change TLV Registry</name>
 	    		<t>
 				TLV Type consists of a code point (unsigned 8-bit value) and is defined in
-				<xref target="ValidationFailTLV"/>. Initial allocations are as follows:
+				<xref target="ValidationStateChangeTLV"/>. Initial allocations are as follows:
 			</t>
 			<list>
 				<t>
@@ -718,6 +773,9 @@
 				</t>
 				<t>
 					Type = &IANA_REL_CODE_VF_RPKI_COVERED_INVALID;: RPKI Invalid with Covering Valid Prefix
+				</t>
+				<t>
+					Type = &IANA_REL_CODE_VF_RPKI_VALID;: RPKI Valid
 				</t>
 			</list>
 			<t>
@@ -730,10 +788,10 @@
 		</section>
 
 		<section>
-			<name>Validation Fail Reason Registry</name>
+			<name>Validation State Change Reason Registry</name>
 	    		<t>
 				The registry consists of a unsigned 8-bit code point and is defined in
-				<xref target="ValidationFailTLV"/>. Initial allocations are as follows:
+				<xref target="ValidationStateChangeTLV"/>. Initial allocations are as follows:
 			</t>
 			<list style="symbols">
 				<t>
@@ -777,7 +835,9 @@
 
     <references title="References">
 		&RFC2119;
+		&RFC9582;
 		&RFC8174;
+		&RFC8210;
 
 		<?rfc include="reference.RFC.4271.xml"?>
 		<?rfc include="reference.RFC.7606.xml"?>
@@ -790,6 +850,7 @@
 		&I-D.ietf-grow-bmp-tlv;
 		&I-D.ietf-grow-bmp-path-marking-tlv;
 		&I-D.ietf-grow-bmp-bgp-rib-stats;
+		&I-D.ietf-sidrops-aspa-verification;
 		&I-D.ietf-idr-bgp-model;
     </references>
 
